@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-documentation>
+  <metadata>
+    <project-name>Система управления аварийной службой</project-name>
+    <version>1.0.0</version>
+    <description>
+      Веб-приложение для управления заявками на устранение аварий,
+      бригадами и их назначениями.
+    </description>
+    <author>Ваше Имя</author>
+    <created-date>2024-12-24</created-date>
+  </metadata>
+
+  <technical-specifications>
+    <technology-stack>
+      <backend>
+        <framework>Spring Boot 4.0.1</framework>
+        <orm>Spring Data JPA</orm>
+        <template-engine>Thymeleaf</template-engine>
+        <validation>Hibernate Validator</validation>
+      </backend>
+      <database>
+        <type>PostgreSQL</type>
+        <version>15+</version>
+      </database>
+      <build-tool>
+        <name>Apache Maven</name>
+        <version>3.9+</version>
+      </build-tool>
+    </technology-stack>
+
+    <requirements>
+      <java-version>25</java-version>
+      <database>PostgreSQL 15+</database>
+      <memory>512MB RAM minimum</memory>
+    </requirements>
+  </technical-specifications>
+
+  <database-schema>
+    <tables>
+      <table name="requests">
+        <description>Заявки на устранение аварий</description>
+        <columns>
+          <column name="request_id" type="SERIAL" primaryKey="true">Уникальный идентификатор</column>
+          <column name="accident_type" type="TEXT" nullable="false">Тип аварии</column>
+          <column name="priority" type="INTEGER" nullable="false" check="priority BETWEEN 1 AND 3">Приоритет (1-3)</column>
+          <column name="address" type="TEXT" nullable="false">Адрес аварии</column>
+          <column name="applicant_name" type="TEXT" nullable="false">Имя заявителя</column>
+          <column name="submission_time" type="TIMESTAMP" nullable="false">Время подачи</column>
+          <column name="description" type="TEXT">Описание</column>
+          <column name="status" type="TEXT" nullable="false" check="status IN ('Не принято', 'Принято', 'В работе', 'Завершено')">Статус заявки</column>
+        </columns>
+      </table>
+
+      <table name="brigades">
+        <description>Рабочие бригады</description>
+        <columns>
+          <column name="brigade_id" type="SERIAL" primaryKey="true">Уникальный идентификатор</column>
+          <column name="brigade_code" type="TEXT" nullable="false" unique="true">Код бригады</column>
+          <column name="vehicle_number" type="TEXT" nullable="false" unique="true">Номер машины</column>
+          <column name="foreman_name" type="TEXT" nullable="false">Имя бригадира</column>
+          <column name="foreman_phone" type="TEXT" nullable="false">Телефон бригадира</column>
+          <column name="status" type="TEXT" nullable="false" check="status IN ('Свободен', 'В пути', 'На месте', 'Расформирована')">Статус бригады</column>
+        </columns>
+      </table>
+
+      <table name="assignments">
+        <description>Назначения бригад на заявки</description>
+        <columns>
+          <column name="assignment_id" type="SERIAL" primaryKey="true">Уникальный идентификатор</column>
+          <column name="brigade_id" type="INTEGER" nullable="false" foreignKey="brigades(brigade_id)">ID бригады</column>
+          <column name="request_id" type="INTEGER" nullable="false" foreignKey="requests(request_id)">ID заявки</column>
+          <column name="assignment_time" type="TIMESTAMP" nullable="false">Время назначения</column>
+          <column name="start_time" type="TIMESTAMP">Время начала работ</column>
+          <column name="end_time" type="TIMESTAMP">Время окончания работ</column>
+        </columns>
+        <foreign-keys>
+          <foreign-key column="brigade_id" references="brigades(brigade_id)" onDelete="CASCADE"/>
+          <foreign-key column="request_id" references="requests(request_id)" onDelete="CASCADE"/>
+        </foreign-keys>
+      </table>
+    </tables>
+
+    <relationships>
+      <relationship>
+        <from>requests</from>
+        <to>assignments</to>
+        <type>one-to-many</type>
+        <description>Одна заявка может иметь несколько назначений</description>
+      </relationship>
+      <relationship>
+        <from>brigades</from>
+        <to>assignments</to>
+        <type>one-to-many</type>
+        <description>Одна бригада может иметь несколько назначений</description>
+      </relationship>
+    </relationships>
+  </database-schema>
+
+  <business-logic>
+    <rules>
+      <rule id="BL-001">
+        <name>Статусы заявок</name>
+        <description>
+          Статус заявки зависит только от назначений:
+          - Нет назначений: "Не принято"
+          - Все назначения без start_time: "Принято"
+          - Хотя бы одно назначение с start_time и без end_time: "В работе"
+          - Хотя бы одно назначение с end_time: "Завершено"
+        </description>
+      </rule>
+
+      <rule id="BL-002">
+        <name>Архивирование бригад</name>
+        <description>
+          При изменении состава бригады создается новая бригада,
+          а старая получает суффикс _vX и статус "Расформирована"
+        </description>
+      </rule>
+
+      <rule id="BL-003">
+        <name>Временные ограничения</name>
+        <description>
+          assignment_time  start_time  end_time
+          Время не может быть в будущем
+        </description>
+      </rule>
+    </rules>
+  </business-logic>
+
+  <api-endpoints>
+    <controllers>
+      <controller name="RequestController" base-path="/requests">
+        <endpoint method="GET" path="/">Список всех заявок</endpoint>
+        <endpoint method="GET" path="/{id}">Просмотр заявки</endpoint>
+        <endpoint method="GET" path="/new">Форма создания заявки</endpoint>
+        <endpoint method="POST" path="/">Создание заявки</endpoint>
+        <endpoint method="GET" path="/{id}/edit">Форма редактирования</endpoint>
+        <endpoint method="POST" path="/{id}">Обновление заявки</endpoint>
+        <endpoint method="POST" path="/{id}/delete">Удаление заявки</endpoint>
+      </controller>
+
+      <controller name="BrigadeController" base-path="/brigades">
+        <endpoint method="GET" path="/">Список всех бригад</endpoint>
+        <endpoint method="GET" path="/{id}">Просмотр бригады</endpoint>
+        <endpoint method="GET" path="/new">Форма создания бригады</endpoint>
+        <endpoint method="POST" path="/">Создание бригады</endpoint>
+        <endpoint method="GET" path="/{id}/edit">Форма редактирования</endpoint>
+        <endpoint method="POST" path="/{id}">Обновление бригады</endpoint>
+        <endpoint method="POST" path="/{id}/soft-delete">Расформировать бригаду</endpoint>
+        <endpoint method="POST" path="/{id}/hard-delete">Полное удаление</endpoint>
+      </controller>
+
+      <controller name="AssignmentController" base-path="/assignments">
+        <endpoint method="GET" path="/">Список всех назначений</endpoint>
+        <endpoint method="GET" path="/{id}">Просмотр назначения</endpoint>
+        <endpoint method="GET" path="/assign">Форма создания назначения</endpoint>
+        <endpoint method="POST" path="/">Создание назначения</endpoint>
+        <endpoint method="GET" path="/{id}/edit">Форма редактирования</endpoint>
+        <endpoint method="POST" path="/{id}">Обновление назначения</endpoint>
+        <endpoint method="POST" path="/{id}/delete">Удаление назначения</endpoint>
+        <endpoint method="POST" path="/{id}/start">Начать работу</endpoint>
+        <endpoint method="POST" path="/{id}/complete">Завершить работу</endpoint>
+      </controller>
+    </controllers>
+  </api-endpoints>
+
+  <deployment>
+    <steps>
+      <step number="1">
+        <description>Установите PostgreSQL и создайте базу данных emergency_service</description>
+        <command>CREATE DATABASE emergency_service;</command>
+      </step>
+      <step number="2">
+        <description>Настройте application.yml с вашими данными БД</description>
+      </step>
+      <step number="3">
+        <description>Соберите проект</description>
+        <command>mvn clean package</command>
+      </step>
+      <step number="4">
+        <description>Запустите приложение</description>
+        <command>java -jar target/java-project-app-0.0.1-SNAPSHOT.jar</command>
+      </step>
+    </steps>
+
+    <access-urls>
+      <url type="application">http://localhost:8080/</url>
+      <url type="api-base">http://localhost:8080/api/</url>
+    </access-urls>
+  </deployment>
+
+  <testing>
+    <test-cases>
+      <test-case id="TC-001">
+        <description>Создание заявки</description>
+        <steps>
+          <step>1. Откройте /requests/new</step>
+          <step>2. Заполните все обязательные поля</step>
+          <step>3. Нажмите "Создать заявку"</step>
+        </steps>
+        <expected-result>Заявка создается со статусом "Не принято"</expected-result>
+      </test-case>
+
+      <test-case id="TC-002">
+        <description>Назначение бригады на заявку</description>
+        <steps>
+          <step>1. Создайте заявку и свободную бригаду</step>
+          <step>2. Откройте /assignments/assign</step>
+          <step>3. Выберите заявку и бригаду</step>
+          <step>4. Нажмите "Создать назначение"</step>
+        </steps>
+        <expected-result>
+          Бригада получает статус "В пути"
+          Заявка получает статус "Принято"
+        </expected-result>
+      </test-case>
+    </test-cases>
+  </testing>
+</project-documentation>
