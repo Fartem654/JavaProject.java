@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Просмотр назначения</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Аварийная служба</a>
+    <div class="navbar-nav">
+      <a class="nav-link" th:href="@{/requests}">Заявки</a>
+      <a class="nav-link" th:href="@{/brigades}">Бригады</a>
+      <a class="nav-link active" th:href="@{/assignments}">Назначения</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a th:href="@{/assignments}">Назначения</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Назначение №<span th:text="${assignment.assignmentId}"></span></li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Назначение №<span th:text="${assignment.assignmentId}"></span></h1>
+    <div>
+            <span class="badge fs-6"
+                  th:classappend="'bg-' + ${assignment.endTime != null ? 'success' :
+                                       assignment.startTime != null ? 'info' : 'secondary'}">
+                <span th:if="${assignment.endTime != null}">Завершено</span>
+                <span th:if="${assignment.endTime == null and assignment.startTime != null}">В работе</span>
+                <span th:if="${assignment.endTime == null and assignment.startTime == null}">Назначено</span>
+            </span>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Информация о заявке</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Номер заявки:</label>
+            <p class="form-control-plaintext">
+              <a th:href="@{/requests/{id}(id=${assignment.request.requestId})}">
+                №<span th:text="${assignment.request.requestId}"></span>
+              </a>
+            </p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Тип аварии:</label>
+            <p class="form-control-plaintext" th:text="${assignment.request.accidentType}"></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Адрес:</label>
+            <p class="form-control-plaintext" th:text="${assignment.request.address}"></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Статус заявки:</label>
+            <p class="form-control-plaintext">
+                            <span class="badge"
+                                  th:classappend="'bg-' + ${assignment.request.status.name() == 'Completed' ? 'success' :
+                                                       assignment.request.status.name() == 'In_Progress' ? 'warning' :
+                                                       assignment.request.status.name() == 'Accepted' ? 'info' : 'secondary'}">
+                                <span th:text="${assignment.request.status.getToDisplay()}"></span>
+                            </span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Информация о бригаде</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Код бригады:</label>
+            <p class="form-control-plaintext">
+              <a th:href="@{/brigades/{id}(id=${assignment.brigade.brigadeId})}">
+                <span th:text="${assignment.brigade.brigadeCode}"></span>
+              </a>
+            </p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Бригадир:</label>
+            <p class="form-control-plaintext" th:text="${assignment.brigade.foremanName}"></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Номер машины:</label>
+            <p class="form-control-plaintext" th:text="${assignment.brigade.vehicleNumber}"></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Статус бригады:</label>
+            <p class="form-control-plaintext">
+                            <span class="badge"
+                                  th:classappend="'bg-' + ${assignment.brigade.status.name() == 'free' ? 'success' :
+                                                       assignment.brigade.status.name() == 'inRoad' ? 'warning' :
+                                                       assignment.brigade.status.name() == 'inPlace' ? 'info' : 'secondary'}">
+                                <span th:text="${assignment.brigade.status.getToDisplay()}"></span>
+                            </span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Временные метки</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Время назначения:</label>
+            <p class="form-control-plaintext" th:text="${#temporals.format(assignment.assignmentTime, 'dd.MM.yyyy HH:mm')}"></p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Начало работ:</label>
+            <p class="form-control-plaintext">
+              <span th:if="${assignment.startTime != null}" th:text="${#temporals.format(assignment.startTime, 'dd.MM.yyyy HH:mm')}"></span>
+              <span th:if="${assignment.startTime == null}" class="text-muted">Не начато</span>
+            </p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Окончание работ:</label>
+            <p class="form-control-plaintext">
+              <span th:if="${assignment.endTime != null}" th:text="${#temporals.format(assignment.endTime, 'dd.MM.yyyy HH:mm')}"></span>
+              <span th:if="${assignment.endTime == null}" class="text-muted">Не завершено</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Действия</h5>
+    </div>
+    <div class="card-body">
+      <div class="d-flex gap-2 flex-wrap">
+        <span th:if="${assignment.endTime == null}">
+          <a th:href="@{/assignments/{id}/edit(id=${assignment.assignmentId})}" class="btn btn-warning">
+            Редактировать назначение
+          </a>
+        </span>
+
+        <form th:action="@{/assignments/{id}/start(id=${assignment.assignmentId})}"
+              method="post"
+              class="d-inline"
+              th:if="${assignment.startTime == null}"
+              onsubmit="return confirm('Начать работу по назначению?')">
+          <button type="submit" class="btn btn-success">Начать работу</button>
+        </form>
+
+        <form th:action="@{/assignments/{id}/complete(id=${assignment.assignmentId})}"
+              method="post"
+              class="d-inline"
+              th:if="${assignment.startTime != null and assignment.endTime == null}"
+              onsubmit="return confirm('Завершить работу по назначению?')">
+          <button type="submit" class="btn btn-info">Завершить работу</button>
+        </form>
+
+        <form th:action="@{/assignments/{id}/delete(id=${assignment.assignmentId})}"
+              method="post"
+              class="d-inline"
+              onsubmit="return confirm('Удалить назначение? Это также изменит статусы заявки и бригады.')">
+          <button type="submit" class="btn btn-danger">Удалить назначение</button>
+        </form>
+
+        <a th:href="@{/assignments}" class="btn btn-secondary ms-auto">Назад к списку</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

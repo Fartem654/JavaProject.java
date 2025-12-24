@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Аварийная служба - Главная</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+        background-color: #f8f9fa;
+    }
+    .welcome-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    .action-card {
+        transition: all 0.3s;
+        border: none;
+        border-radius: 10px;
+        height: 100%;
+    }
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .action-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    .system-info {
+        background: linear-gradient(135deg, #0d6efd 0%, #198754 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+    }
+  </style>
+</head>
+<body>
+<!-- Навигация -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/">
+      <i class="bi bi-shield-check"></i> Аварийная служба
+    </a>
+    <div class="navbar-nav">
+      <a class="nav-link active" href="/">Главная</a>
+      <a class="nav-link" th:href="@{/requests}">Заявки</a>
+      <a class="nav-link" th:href="@{/brigades}">Бригады</a>
+      <a class="nav-link" th:href="@{/assignments}">Назначения</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-5">
+  <!-- Приветствие -->
+  <div class="card welcome-card mb-5">
+    <div class="card-body text-center p-5">
+      <h1 class="display-5 fw-bold text-primary mb-3">
+        <i class="bi bi-shield-check"></i> Система управления аварийной службой
+      </h1>
+      <p class="lead text-muted mb-4">
+        Управление заявками, бригадами и назначениями в одном месте
+      </p>
+      <div class="d-flex justify-content-center gap-3">
+        <a th:href="@{/requests}" class="btn btn-primary btn-lg">
+          <i class="bi bi-list-check"></i> Заявки
+        </a>
+        <a th:href="@{/brigades}" class="btn btn-success btn-lg">
+          <i class="bi bi-people"></i> Бригады
+        </a>
+        <a th:href="@{/assignments}" class="btn btn-info btn-lg text-white">
+          <i class="bi bi-calendar-check"></i> Назначения
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Основные разделы -->
+  <div class="row mb-5">
+    <div class="col-md-4 mb-4">
+      <div class="card action-card bg-primary text-white">
+        <div class="card-body text-center p-4">
+          <div class="action-icon">
+            <i class="bi bi-telephone"></i>
+          </div>
+          <h4>Заявки</h4>
+          <p class="mb-3">Создание и управление заявками на устранение аварий</p>
+          <a th:href="@{/requests}" class="btn btn-light">Перейти</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="card action-card bg-success text-white">
+        <div class="card-body text-center p-4">
+          <div class="action-icon">
+            <i class="bi bi-people"></i>
+          </div>
+          <h4>Бригады</h4>
+          <p class="mb-3">Управление бригадами и их статусами</p>
+          <a th:href="@{/brigades}" class="btn btn-light">Перейти</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="card action-card bg-info text-white">
+        <div class="card-body text-center p-4">
+          <div class="action-icon">
+            <i class="bi bi-calendar-check"></i>
+          </div>
+          <h4>Назначения</h4>
+          <p class="mb-3">Назначение бригад на заявки</p>
+          <a th:href="@{/assignments}" class="btn btn-light">Перейти</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Подсказки по статусам -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-list-check"></i> Статусы заявок</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-secondary mb-1">Не принято</span>
+            <span class="badge bg-info mb-1">Принято</span>
+            <span class="badge bg-warning mb-1">В работе</span>
+            <span class="badge bg-success mb-1">Завершено</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-people"></i> Статусы бригад</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-success mb-1">Свободен</span>
+            <span class="badge bg-warning mb-1">В пути</span>
+            <span class="badge bg-info mb-1">На месте</span>
+            <span class="badge bg-secondary mb-1">Расформирована</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-4 pt-4 border-top text-center text-muted">
+    <p class="mb-2">
+      <i class="bi bi-shield-check"></i> Аварийная служба
+    </p>
+    <p class="small">
+      Система управления &copy; <span th:text="${#dates.createNow().getYear() + 1900}">2024</span>
+    </p>
+  </footer>
+</div>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

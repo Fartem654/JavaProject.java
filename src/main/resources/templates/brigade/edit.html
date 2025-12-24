@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Редактирование бригады</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .archive-info {
+        border-left: 4px solid #ffc107;
+        padding-left: 15px;
+        margin: 20px 0;
+    }
+
+    .form-check-label {
+        font-weight: 500;
+    }
+
+    .status-badge {
+        font-size: 0.9em;
+        padding: 0.4em 0.8em;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Аварийная служба</a>
+    <div class="navbar-nav">
+      <a class="nav-link" th:href="@{/requests}">Заявки</a>
+      <a class="nav-link active" th:href="@{/brigades}">Бригады</a>
+      <a class="nav-link" th:href="@{/assignments}">Назначения</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a th:href="@{/brigades}">Бригады</a></li>
+      <li class="breadcrumb-item" th:if="${brigade != null}">
+        <a th:href="@{/brigades/{id}(id=${brigade.brigadeId})}">
+          <span th:text="${brigade.brigadeCode}"></span>
+        </a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">Редактирование</li>
+    </ol>
+  </nav>
+
+  <div th:if="${brigade == null}" class="alert alert-danger">
+    <strong>Ошибка:</strong> Бригада не найдена.
+    <a th:href="@{/brigades}" class="alert-link">Вернуться к списку бригад</a>
+  </div>
+
+  <div th:if="${brigade != null}">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1>Редактирование бригады: <span th:text="${brigade.brigadeCode}"></span></h1>
+      <span class="badge status-badge"
+            th:classappend="'bg-' + ${brigade.status.name() == 'free' ? 'success' :
+                                       brigade.status.name() == 'inRoad' ? 'warning' :
+                                       brigade.status.name() == 'inPlace' ? 'info' : 'secondary'}">
+                <span th:text="${brigade.status.getToDisplay()}" style="color: black !important;"></span>
+            </span>
+    </div>
+
+    <div th:if="${error != null}" class="alert alert-danger">
+      <span th:text="${error}"></span>
+    </div>
+
+    <div th:if="${brigade.status.name() != 'free' and brigade.status.name() != 'disbanded'}"
+         class="alert alert-warning">
+      <strong>Внимание!</strong> Бригада сейчас
+      <span th:text="${brigade.status.getToDisplay()}"></span>.
+      Для архивирования бригада должна быть свободна.
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <form th:action="@{/brigades/{id}(id=${brigade.brigadeId})}"
+              th:object="${brigadeForm}"
+              method="post">
+
+          <div class="mb-3">
+            <label for="brigadeCode" class="form-label fw-bold">
+              Код бригады *
+            </label>
+            <input type="text"
+                   class="form-control"
+                   id="brigadeCode"
+                   th:field="*{brigadeCode}"
+                   required>
+            <div class="text-danger" th:if="${#fields.hasErrors('brigadeCode')}">
+              <span th:errors="*{brigadeCode}"></span>
+            </div>
+            <div class="form-text">
+              Уникальный идентификатор бригады
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="vehicleNumber" class="form-label fw-bold">
+              Номер машины *
+            </label>
+            <input type="text"
+                   class="form-control"
+                   id="vehicleNumber"
+                   th:field="*{vehicleNumber}"
+                   pattern="[А-ЯЁ]{1}[0-9]{3}[А-ЯЁ]{2}[0-9]{2,3}"
+                   title="Формат: А123БВ77 или А123БВ177"
+                   required>
+            <div class="text-danger" th:if="${#fields.hasErrors('vehicleNumber')}">
+              <span th:errors="*{vehicleNumber}"></span>
+            </div>
+            <div class="form-text">
+              Государственный регистрационный номер
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="foremanName" class="form-label fw-bold">
+              Имя бригадира *
+            </label>
+            <input type="text"
+                   class="form-control"
+                   id="foremanName"
+                   th:field="*{foremanName}"
+                   required>
+            <div class="text-danger" th:if="${#fields.hasErrors('foremanName')}">
+              <span th:errors="*{foremanName}"></span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="foremanPhone" class="form-label fw-bold">
+              Телефон бригадира *
+            </label>
+            <input type="tel"
+                   class="form-control"
+                   id="foremanPhone"
+                   th:field="*{foremanPhone}"
+                   pattern="[\+0-9\s\-\(\)]+"
+                   title="Введите номер телефона"
+                   required>
+            <div class="text-danger" th:if="${#fields.hasErrors('foremanPhone')}">
+              <span th:errors="*{foremanPhone}"></span>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input"
+                     type="checkbox"
+                     role="switch"
+                     id="archiveSwitch"
+                     th:field="*{archive}"
+                     th:disabled="${brigade.status.name() != 'free' and brigade.status.name() != 'disbanded'}">
+              <label class="form-check-label fw-bold" for="archiveSwitch">
+                Создать новую бригаду с этими данными (архивирование)
+              </label>
+            </div>
+
+            <div id="archiveInfo" class="archive-info mt-2" style="display: none;">
+              <div class="alert alert-warning">
+                <h6 class="alert-heading">Что произойдет при архивировании:</h6>
+                <ul class="mb-0">
+                  <li>Текущая бригада <strong th:text="${brigade.brigadeCode}"></strong> получит статус "Расформирована"</li>
+                  <li>Её код изменится на <code th:text="${brigade.brigadeCode} + '_vX'"></code></li>
+                  <li>Её номер машины изменится на <code th:text="${brigade.vehicleNumber} + '_vX'"></code></li>
+                  <li>Будет создана новая бригада с введенными данными (новый код и новый номер машины)</li>
+                  <li>История выездов останется у старой (архивной) бригады</li>
+                  <li>Новая бригада начнет работу со статусом "Свободен"</li>
+                </ul>
+                <hr>
+                <p class="mb-0">
+                  <small><strong>Важно:</strong> Для новой бригады нужно указать новый уникальный код бригады и номер машины.</small>
+                </p>
+              </div>
+            </div>
+
+            <div id="directEditInfo" class="archive-info mt-2">
+              <div class="alert alert-info">
+                <h6 class="alert-heading">Прямое редактирование:</h6>
+                <ul class="mb-0">
+                  <li>Данные текущей бригады будут обновлены</li>
+                  <li>Код бригады и номер машины останутся прежними или изменятся на указанные</li>
+                  <li>История выездов сохранится</li>
+                  <li>Статус бригады не изменится</li>
+                </ul>
+                <hr>
+                <p class="mb-0">
+                  <small>Используйте этот режим для исправления опечаток или незначительных изменений.</small>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-4">
+            <div>
+              <button type="submit" class="btn btn-primary me-2">
+                Сохранить изменения
+              </button>
+              <a th:href="@{/brigades/{id}(id=${brigade.brigadeId})}" class="btn btn-secondary">
+                Отмена
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Информация о текущей бригаде -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h6 class="mb-0">Текущие данные бригады</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Код бригады:</dt>
+              <dd class="col-sm-7" th:text="${brigade.brigadeCode}"></dd>
+
+              <dt class="col-sm-5">Номер машины:</dt>
+              <dd class="col-sm-7" th:text="${brigade.vehicleNumber}"></dd>
+            </dl>
+          </div>
+          <div class="col-md-6">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Бригадир:</dt>
+              <dd class="col-sm-7" th:text="${brigade.foremanName}"></dd>
+
+              <dt class="col-sm-5">Телефон:</dt>
+              <dd class="col-sm-7" th:text="${brigade.foremanPhone}"></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- История изменений (если есть архивные версии) -->
+    <div th:if="${brigade.brigadeCode != null and brigade.brigadeCode.contains('_v')}" class="card mt-3">
+      <div class="card-header">
+        <h6 class="mb-0">Архивная версия</h6>
+      </div>
+      <div class="card-body">
+        <p class="mb-0 text-muted">
+          Это архивная (расформированная) версия бригады.
+          Вы не можете её редактировать напрямую.
+          Для создания новой бригады на основе этой используйте режим архивирования.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Переключение отображения информации в зависимости от галочки архивирования
+  document.addEventListener('DOMContentLoaded', function() {
+      const archiveSwitch = document.getElementById('archiveSwitch');
+      const archiveInfo = document.getElementById('archiveInfo');
+      const directEditInfo = document.getElementById('directEditInfo');
+
+      if (archiveSwitch && archiveInfo && directEditInfo) {
+          function toggleArchiveInfo() {
+              if (archiveSwitch.checked) {
+                  archiveInfo.style.display = 'block';
+                  directEditInfo.style.display = 'none';
+              } else {
+                  archiveInfo.style.display = 'none';
+                  directEditInfo.style.display = 'block';
+              }
+          }
+
+          // Инициализация
+          toggleArchiveInfo();
+
+          // Обработчик изменения галочки
+          archiveSwitch.addEventListener('change', toggleArchiveInfo);
+
+          // Блокировка отправки формы если бригада не свободна и выбрано архивирование
+          const form = document.querySelector('form');
+          if (form) {
+              form.addEventListener('submit', function(e) {
+                  if (archiveSwitch.checked && archiveSwitch.disabled) {
+                      e.preventDefault();
+                      alert('Невозможно выполнить архивирование: бригада должна быть свободна!');
+                      return false;
+                  }
+              });
+          }
+      }
+  });
+</script>
+</body>
+</html>

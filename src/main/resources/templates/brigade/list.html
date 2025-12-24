@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Список бригад</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Аварийная служба</a>
+    <div class="navbar-nav">
+      <a class="nav-link" th:href="@{/requests}">Заявки</a>
+      <a class="nav-link active" th:href="@{/brigades}">Бригады</a>
+      <a class="nav-link" th:href="@{/assignments}">Назначения</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Бригады</h1>
+    <a th:href="@{/brigades/new}" class="btn btn-success">+ Новая бригада</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+        <tr>
+          <th width="100">Код бригады</th>
+          <th>Бригадир</th>
+          <th>Телефон</th>
+          <th>Машина</th>
+          <th width="120">Статус</th>
+          <th width="250" class="text-center">Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="brigade : ${brigades}">
+          <td>
+            <a th:href="@{/brigades/{id}(id=${brigade.brigadeId})}"
+               class="text-decoration-none">
+              <strong th:text="${brigade.brigadeCode}"></strong> </a>
+          </td>
+          <td>
+              <span th:text="${brigade.foremanName}"></span>
+          </td>
+          <td th:text="${brigade.foremanPhone}"></td>
+          <td th:text="${brigade.vehicleNumber}"></td>
+          <td>
+            <span class="badge"
+                  th:classappend="'bg-' + ${brigade.status.name() == 'free' ? 'success' :
+                                       brigade.status.name() == 'inRoad' ? 'warning' :
+                                       brigade.status.name() == 'inPlace' ? 'info' : 'secondary'}">
+                <span th:text="${brigade.status.getToDisplay()}"></span>
+            </span>
+          </td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <a th:href="@{/brigades/{id}(id=${brigade.brigadeId})}"
+                 class="btn btn-outline-primary">Просмотр</a>
+              <a th:href="@{/brigades/{id}/edit(id=${brigade.brigadeId})}"
+                 class="btn btn-outline-warning"
+                 th:if="${brigade.status.name() != 'disbanded'}">Редактировать</a>
+            </div>
+          </td>
+        </tr>
+
+        <tr th:if="${brigades.isEmpty()}">
+          <td colspan="6" class="text-center py-4">
+            <p class="text-muted mb-2">Нет бригад</p>
+            <a th:href="@{/brigades/new}" class="btn btn-sm btn-primary">
+              Создать первую бригаду
+            </a>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <small class="text-muted">Всего бригад: <span th:text="${brigades.size()}"></span></small>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

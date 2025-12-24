@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Новое назначение</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .required:after {
+        content: " *";
+        color: #dc3545;
+    }
+    .form-text {
+        font-size: 0.85rem;
+    }
+    .info-box {
+        background-color: #e7f3ff;
+        border-left: 4px solid #0d6efd;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+<!-- Навигационная панель -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Аварийная служба</a>
+    <div class="navbar-nav">
+      <a class="nav-link" th:href="@{/requests}">Заявки</a>
+      <a class="nav-link" th:href="@{/brigades}">Бригады</a>
+      <a class="nav-link active" th:href="@{/assignments}">Назначения</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <!-- Хлебные крошки -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a th:href="@{/assignments}">Назначения</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Новое назначение</li>
+    </ol>
+  </nav>
+
+  <!-- Заголовок -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Новое назначение</h1>
+    <a th:href="@{/assignments}" class="btn btn-secondary">Назад к списку</a>
+  </div>
+
+  <!-- Информационный блок -->
+  <div class="info-box">
+    <h6 class="mb-2"><i class="bi bi-info-circle"></i> Информация о назначении</h6>
+    <p class="mb-1">Назначение бригады на заявку автоматически меняет статусы:</p>
+    <ul class="mb-0">
+      <li><strong>Бригада:</strong> "Свободен" → "В пути"</li>
+      <li><strong>Заявка:</strong> Статус обновляется в зависимости от других назначений</li>
+      <li>После назначения можно начать работы, когда бригада прибудет на место</li>
+    </ul>
+  </div>
+
+  <!-- Форма создания -->
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Данные назначения</h5>
+        </div>
+        <div class="card-body">
+          <form th:action="@{/assignments}"
+                th:object="${assignmentForm}"
+                method="post">
+
+            <!-- Выбор заявки -->
+            <div class="mb-4">
+              <label for="requestId" class="form-label fw-bold required">
+                Заявка
+              </label>
+              <select class="form-select"
+                      id="requestId"
+                      th:field="*{requestId}"
+                      required>
+                <option value="">-- Выберите заявку --</option>
+                <option th:each="request : ${activeRequests}"
+                        th:value="${request.requestId}"
+                        th:text="'№' + ${request.requestId} + ' - ' + ${request.accidentType} + ' (' + ${request.address} + ')'">
+                </option>
+              </select>
+              <div class="text-danger" th:if="${#fields.hasErrors('requestId')}">
+                <span th:errors="*{requestId}"></span>
+              </div>
+              <div class="form-text">
+                Выберите заявку из списка активных (не завершенных) заявок
+              </div>
+            </div>
+
+            <!-- Выбор бригады -->
+            <div class="mb-4">
+              <label for="brigadeId" class="form-label fw-bold required">
+                Бригада
+              </label>
+              <select class="form-select"
+                      id="brigadeId"
+                      th:field="*{brigadeId}"
+                      required>
+                <option value="">-- Выберите бригаду --</option>
+                <option th:each="brigade : ${freeBrigades}"
+                        th:value="${brigade.brigadeId}"
+                        th:text="${brigade.brigadeCode} + ' - ' + ${brigade.foremanName} + ' (' + ${brigade.vehicleNumber} + ')'">
+                </option>
+              </select>
+              <div class="text-danger" th:if="${#fields.hasErrors('brigadeId')}">
+                <span th:errors="*{brigadeId}"></span>
+              </div>
+              <div class="form-text">
+                Выберите свободную бригаду из списка. Только свободные бригады доступны для назначения.
+              </div>
+            </div>
+
+            <!-- Время назначения -->
+            <div class="mb-4">
+              <label for="assignmentTime" class="form-label fw-bold required">
+                Время назначения
+              </label>
+              <input type="datetime-local"
+                     class="form-control"
+                     id="assignmentTime"
+                     th:field="*{assignmentTime}"
+                     th:value="${#temporals.format(assignmentForm.assignmentTime, 'yyyy-MM-dd''T''HH:mm')}"
+                     required>
+              <div class="text-danger" th:if="${#fields.hasErrors('assignmentTime')}">
+                <span th:errors="*{assignmentTime}"></span>
+              </div>
+              <div class="form-text">
+                Дата и время, когда бригада была назначена на заявку
+              </div>
+            </div>
+
+
+            <!-- Сообщение об ошибке -->
+            <div th:if="${error != null}" class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle"></i>
+              <span th:text="${error}"></span>
+            </div>
+
+            <!-- Кнопки -->
+            <div class="d-flex justify-content-between mt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> Создать назначение
+              </button>
+              <a th:href="@{/assignments}" class="btn btn-outline-secondary">
+                Отмена
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Информация о процессе -->
+      <div class="card mt-4">
+          <p class="small text-muted mb-0">
+            <strong>Примечание:</strong> После создания назначения можно будет начать и завершить работы через соответствующие кнопки в списке назначений.
+          </p>
+        </div>
+      </div>
+
+      <div class="alert alert-warning mt-4">
+        <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Важно знать</h6>
+        <ul class="mb-0">
+          <li>Нельзя назначить расформированную бригаду</li>
+          <li>Нельзя назначить бригаду на завершенную заявку</li>
+          <li>На одну заявку можно назначить несколько бригад</li>
+          <li>Время начала работ должно быть позже времени назначения</li>
+          <li>Время окончания работ должно быть позже времени начала работ</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Функция для переключения дополнительных параметров
+  function toggleAdvancedOptions() {
+      const options = document.getElementById('advancedOptions');
+      const button = event.target.closest('button');
+
+      if (options.style.display === 'none') {
+          options.style.display = 'block';
+          button.innerHTML = '<i class="bi bi-gear-fill"></i> Скрыть дополнительные параметры';
+          button.classList.remove('btn-outline-secondary');
+          button.classList.add('btn-secondary');
+      } else {
+          options.style.display = 'none';
+          button.innerHTML = '<i class="bi bi-gear"></i> Дополнительные параметры';
+          button.classList.remove('btn-secondary');
+          button.classList.add('btn-outline-secondary');
+      }
+  }
+
+  // Автоматическая установка времени
+  document.addEventListener('DOMContentLoaded', function() {
+      // Если время назначения не установлено, установить текущее
+      const assignmentTimeInput = document.getElementById('assignmentTime');
+      if (assignmentTimeInput && !assignmentTimeInput.value) {
+          const now = new Date();
+          const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+              .toISOString()
+              .slice(0, 16);
+          assignmentTimeInput.value = localDateTime;
+      }
+
+      // Если передан requestId в URL, предзаполнить его
+      const urlParams = new URLSearchParams(window.location.search);
+      const requestId = urlParams.get('requestId');
+      if (requestId) {
+          const requestSelect = document.getElementById('requestId');
+          if (requestSelect) {
+              requestSelect.value = requestId;
+          }
+      }
+  });
+</script>
+</body>
+</html>

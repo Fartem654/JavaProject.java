@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Просмотр бригады</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Аварийная служба</a>
+    <div class="navbar-nav">
+      <a class="nav-link" th:href="@{/requests}">Заявки</a>
+      <a class="nav-link active" th:href="@{/brigades}">Бригады</a>
+      <a class="nav-link" th:href="@{/assignments}">Назначения</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a th:href="@{/brigades}">Бригады</a></li>
+      <li class="breadcrumb-item active" aria-current="page">
+        Бригада <span th:text="${brigade.brigadeCode}"></span>
+      </li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Бригада: <span th:text="${brigade.brigadeCode}"></span></h1>
+    <span class="badge fs-6"
+          th:classappend="'bg-' + ${brigade.status.name() == 'free' ? 'success' :
+                                   brigade.status.name() == 'inRoad' ? 'warning' :
+                                   brigade.status.name() == 'inPlace' ? 'info' : 'secondary'}">
+            <span th:text="${brigade.status.getToDisplay()}" style="color: black !important;"></span>
+        </span>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Основная информация</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Код бригады:</label>
+            <p class="form-control-plaintext" th:text="${brigade.brigadeCode}"></p>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Номер машины:</label>
+            <p class="form-control-plaintext" th:text="${brigade.vehicleNumber}"></p>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Бригадир:</label>
+            <p class="form-control-plaintext" th:text="${brigade.foremanName}"></p>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Телефон бригадира:</label>
+            <p class="form-control-plaintext" th:text="${brigade.foremanPhone}"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">История назначений</h5>
+      <small class="text-muted">Всего выездов:
+        <span th:text="${brigade.assignments != null ? brigade.assignments.size() : 0}"></span>
+      </small>
+    </div>
+    <div class="card-body">
+      <div th:if="${brigade.assignments != null and not brigade.assignments.isEmpty()}">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+            <tr>
+              <th>Заявка</th>
+              <th>Тип аварии</th>
+              <th>Время назначения</th>
+              <th>Начало работ</th>
+              <th>Окончание работ</th>
+              <th>Статус заявки</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="assignment : ${brigade.assignments}">
+              <td>
+                <a th:href="@{/requests/{id}(id=${assignment.request.requestId})}">
+                  №<span th:text="${assignment.request.requestId}"></span>
+                </a>
+              </td>
+              <td th:text="${assignment.request.accidentType}"></td>
+              <td th:text="${#temporals.format(assignment.assignmentTime, 'dd.MM.yyyy HH:mm')}"></td>
+              <td>
+                <span th:if="${assignment.startTime != null}"
+                      th:text="${#temporals.format(assignment.startTime, 'dd.MM.yyyy HH:mm')}">
+                </span>
+                <span th:if="${assignment.startTime == null}" class="text-muted">
+                    Не начато
+                </span>
+              </td>
+              <td>
+                <span th:if="${assignment.endTime != null}"
+                      th:text="${#temporals.format(assignment.endTime, 'dd.MM.yyyy HH:mm')}">
+                </span>
+                <span th:if="${assignment.endTime == null}" class="text-muted">
+                    Не завершено
+                </span>
+              </td>
+              <td>
+                <span class="badge"
+                      th:classappend="'bg-' + ${assignment.request.status.name() == 'Completed' ? 'success' :
+                                       assignment.request.status.name() == 'In_Progress' ? 'warning' :
+                                       assignment.request.status.name() == 'Accepted' ? 'info' : 'secondary'}">
+                    <span th:text="${assignment.request.status.getToDisplay()}"
+                      style="color: black !important;"></span>
+                </span>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div th:if="${brigade.assignments == null or brigade.assignments.isEmpty()}">
+        <div class="text-center py-4">
+          <p class="text-muted mb-3">Бригада не выполняла заявок</p>
+          <a th:href="@{/assignments/assign}" class="btn btn-primary" th:if="${brigade.status.name() != 'disbanded'}">
+            Назначить на заявку
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Действия</h5>
+    </div>
+    <div class="card-body">
+      <div class="d-flex gap-2 flex-wrap">
+        <a th:href="@{/brigades/{id}/edit(id=${brigade.brigadeId})}"
+           class="btn btn-warning"
+           th:if="${brigade.status.name() != 'disbanded'}">
+          Редактировать бригаду
+        </a>
+
+        <form th:action="@{/brigades/{id}/soft-delete(id=${brigade.brigadeId})}"
+              method="post"
+              class="d-inline"
+              th:if="${brigade.status.name() != 'disbanded'}"
+              onsubmit="return confirm('Вы уверены, что хотите расформировать бригаду ' +
+                      '${brigade.brigadeCode}' + '? Это нельзя отменить.');">
+          <button type="submit" class="btn btn-secondary">Расформировать бригаду</button>
+        </form>
+
+        <form th:action="@{/brigades/{id}/hard-delete(id=${brigade.brigadeId})}"
+              method="post"
+              class="d-inline"
+              th:if="${brigade.status.name() == 'disbanded'}"
+              onsubmit="return confirm('ВНИМАНИЕ! Вы собираетесь полностью удалить бригаду. Все данные о выездах будут потеряны. Продолжить?');">
+          <button type="submit" class="btn btn-danger">Полное удаление</button>
+        </form>
+
+        <a th:href="@{/brigades}" class="btn btn-outline-secondary ms-auto">Назад к списку</a>
+      </div>
+
+      <div th:if="${brigade.status.name() == 'disbanded'}" class="mt-3">
+        <div class="alert alert-warning">
+          <strong>Внимание!</strong> Эта бригада расформирована.
+          Её нельзя редактировать или назначать на заявки.
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <small class="text-muted">
+          Статус бригады автоматически меняется при назначении на заявку:
+          <span class="badge bg-success">Свободен</span> →
+          <span class="badge bg-warning">В пути</span> →
+          <span class="badge bg-info">На месте</span> →
+          <span class="badge bg-success">Свободен</span>
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Список заявок</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Аварийная служба</a>
+    <div class="navbar-nav">
+      <a class="nav-link active" th:href="@{/requests}">Заявки</a>
+      <a class="nav-link" th:href="@{/brigades}">Бригады</a>
+      <a class="nav-link" th:href="@{/assignments}">Назначения</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Заявки</h1>
+    <a th:href="@{/requests/new}" class="btn btn-success">+ Новая заявка</a>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Фильтр по статусу</h5>
+      <div class="btn-group">
+        <a th:href="@{/requests}" class="btn btn-outline-secondary">Все</a>
+        <a th:href="@{/requests(status='Not_Accepted')}" class="btn btn-outline-secondary">Не принято</a>
+        <a th:href="@{/requests(status='Accepted')}" class="btn btn-outline-secondary">Принято</a>
+        <a th:href="@{/requests(status='In_Progress')}" class="btn btn-outline-secondary">В работе</a>
+        <a th:href="@{/requests(status='Completed')}" class="btn btn-outline-secondary">Завершено</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+        <tr>
+          <th width="80">№</th>
+          <th>Тип аварии</th>
+          <th>Приоритет</th>
+          <th>Адрес</th>
+          <th>Статус</th>
+          <th width="250" class="text-center">Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="request : ${requests}">
+          <td>
+            <strong>№<span th:text="${request.requestId}"></span></strong>
+          </td>
+          <td>
+            <a th:href="@{/requests/{id}(id=${request.requestId})}"
+               class="text-decoration-none">
+              <span th:text="${request.accidentType}"></span>
+            </a>
+          </td>
+          <td th:text="${request.priority.getToDisplayStr()}"></td>
+          <td th:text="${request.address}"></td>
+          <td>
+            <span th:text="${request.status.getToDisplay()}"></span>
+          </td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <a th:href="@{/requests/{id}(id=${request.requestId})}"
+                 class="btn btn-outline-primary">Просмотр</a>
+              <a th:href="@{/requests/{id}/edit(id=${request.requestId})}"
+                 class="btn btn-outline-warning"
+                 th:if="${request.status.name() != 'Completed'}">Редактировать</a>
+
+              <form th:action="@{/requests/{id}/delete(id=${request.requestId})}"
+                    method="post"
+                    onsubmit="return confirm('Удалить заявку №' + ${request.requestId} + '?');">
+                <button type="submit" class="btn btn-outline-danger">Удалить</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+
+        <tr th:if="${requests.isEmpty()}">
+          <td colspan="6" class="text-center py-4">
+            <p class="text-muted mb-2">Нет заявок</p>
+            <a th:href="@{/requests/new}" class="btn btn-sm btn-primary">
+              Создать заявку
+            </a>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <small>Всего заявок: <span th:text="${requests.size()}"></span></small>
+    </div>
+  </div>
+</div>
+</body>
+</html>
